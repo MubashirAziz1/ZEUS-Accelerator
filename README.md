@@ -5,12 +5,12 @@
 [Yixiao Wang*](https://yixiao-wang-stats.github.io/), 
 [Ting Jiang*](https://github.com/Ting-Justin-Jiang), 
 [Zishan Shao*](https://zishan-shao.github.io/), 
-[Hancheng Ye*](https://github.com/HankYe), 
-[Jingwei Sun*](https://jingwei-sun.com/), 
-[Mingyuan Ma*](https://scholars.duke.edu/person/mingyuan.ma), 
-[Jianyi Zhang*](https://jayzhang42.github.io/), 
-[Yiran Chen*](https://ece.duke.edu/people/yiran-chen/), 
-[Hai Li*](https://ece.duke.edu/people/hai-helen-li/)
+[Hancheng Ye](https://github.com/HankYe), 
+[Jingwei Sun](https://jingwei-sun.com/), 
+[Mingyuan Ma](https://scholars.duke.edu/person/mingyuan.ma), 
+[Jianyi Zhang](https://jayzhang42.github.io/), 
+[Yiran Chen](https://ece.duke.edu/people/yiran-chen/), 
+[Hai Li](https://ece.duke.edu/people/hai-helen-li/)
 
 [**Project Page**](https://yixiao-wang-stats.github.io/zeus/)
 
