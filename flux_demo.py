@@ -10,9 +10,9 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %
 from torchvision.utils import save_image
 from zeus import patch
 
-#from diffusers import FluxPipeline
+from diffusers import FluxPipeline
 import torchvision.transforms as T
-from diffusers import DiffusionPipeline
+#from diffusers import DiffusionPipeline
 
 
 def set_random_seed(seed):
@@ -26,19 +26,19 @@ if __name__ == "__main__":
     parser.add_argument("--seed", type=int, default=37)
     parser.add_argument("--height", type=int, default=1024)
     parser.add_argument("--width", type=int, default=1024)
-    parser.add_argument("--model", type=str, default="stable-diffusion-v1-5/stable-diffusion-v1-5")
+    parser.add_argument("--model", type=str, default="black-forest-labs/FLUX.1-dev")
     args = parser.parse_args()
 
     lora_path = ""
     seed = args.seed
     prompt = args.prompt
 
-    # #baseline_pipe = FluxPipeline.from_pretrained(args.model, torch_dtype=torch.bfloat16).to('cuda')
-    # baseline_pipe = DiffusionPipeline.from_pretrained("stable-diffusion-v1-5/stable-diffusion-v1-5", dtype=torch.bfloat16, device_map="cuda")
+    baseline_pipe = FluxPipeline.from_pretrained(args.model, torch_dtype=torch.bfloat16).to('cuda')
+    #baseline_pipe = DiffusionPipeline.from_pretrained("stable-diffusion-v1-5/stable-diffusion-v1-5", dtype=torch.bfloat16, device_map="cuda")
 
 
-    # # Warmup GPU. Only for testing the speed.
-    # logging.info("Warming up GPU...")
+    # Warmup GPU. Only for testing the speed.
+    logging.info("Warming up GPU...")
     # for _ in range(1):
     #     set_random_seed(seed)
     #     _ = baseline_pipe(
@@ -51,63 +51,12 @@ if __name__ == "__main__":
     #         output_type='pt'
     #     ).images
 
-    # # Baseline
-    # logging.info("Running baseline...")
-    # start_time = time.time()
-    # set_random_seed(seed)
-
-    # ori_output = baseline_pipe(
-    #     prompt,
-    #     height=args.height,
-    #     width=args.width,
-    #     guidance_scale=3.5,
-    #     num_inference_steps=50,
-    #     max_sequence_length=512,
-    #     output_type='pt'
-    # ).images
-    # baseline_use_time = time.time() - start_time
-    # logging.info("Baseline: {:.2f} seconds".format(baseline_use_time))
-
-    # del baseline_pipe
-    # torch.cuda.empty_cache()
-
-    # Zeus
-    pipe = DiffusionPipeline.from_pretrained("stable-diffusion-v1-5/stable-diffusion-v1-5", dtype=torch.bfloat16, device_map="cuda")
-
-    # pipe.load_lora_weights(lora_path)
-
-    patch.apply_patch(pipe,
-                      acc_range=(10, 45),
-
-                      interp_mode="psi",
-                      caching_mode="reuse_interp",
-                      denominator=3,
-                      modular=(0,1,),
-
-                      lagrange_int=6,
-                      lagrange_step=24,
-                      lagrange_term=3)
-
-    # Warmup GPU. Only for testing the speed.
-    logging.info("Warming up GPU...")
-    for _ in range(1):
-        set_random_seed(seed)
-        _ = pipe(
-            prompt,
-            height=args.height,
-            width=args.width,
-            guidance_scale=3.5,
-            num_inference_steps=50,
-            max_sequence_length=512,
-            output_type='pt'
-        ).images
-        patch.reset_cache(pipe)
-
-    logging.info("Running ⚡Zeus...")
-    set_random_seed(seed)
+    # Baseline
+    logging.info("Running baseline...")
     start_time = time.time()
+    set_random_seed(seed)
 
-    cap_output = pipe(
+    ori_output = baseline_pipe(
         prompt,
         height=args.height,
         width=args.width,
@@ -116,16 +65,67 @@ if __name__ == "__main__":
         max_sequence_length=512,
         output_type='pt'
     ).images
-    use_time = time.time() - start_time
-    logging.info("⚡Zeus: {:.2f} seconds".format(use_time))
+    baseline_use_time = time.time() - start_time
+    logging.info("Baseline: {:.2f} seconds".format(baseline_use_time))
 
-    print(pipe.transformer._cache_bus.skipping_path)
+    del baseline_pipe
+    torch.cuda.empty_cache()
 
-    # logging.info("Baseline: {:.2f} seconds. CAP: {:.2f} seconds".format(baseline_use_time, use_time))
+    # # Zeus
+    # pipe = DiffusionPipeline.from_pretrained("stable-diffusion-v1-5/stable-diffusion-v1-5", dtype=torch.bfloat16, device_map="cuda")
+
+    # # pipe.load_lora_weights(lora_path)
+
+    # patch.apply_patch(pipe,
+    #                   acc_range=(10, 45),
+
+    #                   interp_mode="psi",
+    #                   caching_mode="reuse_interp",
+    #                   denominator=3,
+    #                   modular=(0,1,),
+
+    #                   lagrange_int=6,
+    #                   lagrange_step=24,
+    #                   lagrange_term=3)
+
+    # # Warmup GPU. Only for testing the speed.
+    # logging.info("Warming up GPU...")
+    # for _ in range(1):
+    #     set_random_seed(seed)
+    #     _ = pipe(
+    #         prompt,
+    #         height=args.height,
+    #         width=args.width,
+    #         guidance_scale=3.5,
+    #         num_inference_steps=50,
+    #         max_sequence_length=512,
+    #         output_type='pt'
+    #     ).images
+    #     patch.reset_cache(pipe)
+
+    # logging.info("Running ⚡Zeus...")
+    # set_random_seed(seed)
+    # start_time = time.time()
+
+    # cap_output = pipe(
+    #     prompt,
+    #     height=args.height,
+    #     width=args.width,
+    #     guidance_scale=3.5,
+    #     num_inference_steps=50,
+    #     max_sequence_length=512,
+    #     output_type='pt'
+    # ).images
+    # use_time = time.time() - start_time
+    # logging.info("⚡Zeus: {:.2f} seconds".format(use_time))
+
+    # print(pipe.transformer._cache_bus.skipping_path)
+
+    # # logging.info("Baseline: {:.2f} seconds. CAP: {:.2f} seconds".format(baseline_use_time, use_time))
 
     
     # save_image([ori_output[0], cap_output[0]], "output.png")
-    save_image(cap_output[0],  "/kaggle/working/output.png")
+    save_image(ori_output[0],  "/kaggle/working/output.png")
     logging.info("Saved to output.png. Done!")
 
     # print("Evaluating LPIPS")
