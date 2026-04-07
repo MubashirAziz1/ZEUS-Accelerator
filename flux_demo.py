@@ -68,8 +68,8 @@ if __name__ == "__main__":
     baseline_use_time = time.time() - start_time
     logging.info("Baseline: {:.2f} seconds".format(baseline_use_time))
 
-    del baseline_pipe
-    torch.cuda.empty_cache()
+    # del baseline_pipe
+    # torch.cuda.empty_cache()
 
     # # Zeus
     # pipe = DiffusionPipeline.from_pretrained("stable-diffusion-v1-5/stable-diffusion-v1-5", dtype=torch.bfloat16, device_map="cuda")
