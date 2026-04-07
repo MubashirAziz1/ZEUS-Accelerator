@@ -33,66 +33,15 @@ if __name__ == "__main__":
     seed = args.seed
     prompt = args.prompt
 
-    #baseline_pipe = FluxPipeline.from_pretrained(args.model, torch_dtype=torch.bfloat16).to('cuda')
-    baseline_pipe = DiffusionPipeline.from_pretrained("stable-diffusion-v1-5/stable-diffusion-v1-5", dtype=torch.bfloat16, device_map="cuda")
+    # #baseline_pipe = FluxPipeline.from_pretrained(args.model, torch_dtype=torch.bfloat16).to('cuda')
+    # baseline_pipe = DiffusionPipeline.from_pretrained("stable-diffusion-v1-5/stable-diffusion-v1-5", dtype=torch.bfloat16, device_map="cuda")
 
-
-    # Warmup GPU. Only for testing the speed.
-    logging.info("Warming up GPU...")
-    for _ in range(1):
-        set_random_seed(seed)
-        _ = baseline_pipe(
-            prompt,
-            height=args.height,
-            width=args.width,
-            guidance_scale=3.5,
-            num_inference_steps=50,
-            max_sequence_length=512,
-            output_type='pt'
-        ).images
-
-    # Baseline
-    logging.info("Running baseline...")
-    start_time = time.time()
-    set_random_seed(seed)
-
-    ori_output = baseline_pipe(
-        prompt,
-        height=args.height,
-        width=args.width,
-        guidance_scale=3.5,
-        num_inference_steps=50,
-        max_sequence_length=512,
-        output_type='pt'
-    ).images
-    baseline_use_time = time.time() - start_time
-    logging.info("Baseline: {:.2f} seconds".format(baseline_use_time))
-
-    del baseline_pipe
-    torch.cuda.empty_cache()
-
-    # # Zeus
-    # pipe = DiffusionPipeline.from_pretrained("stable-diffusion-v1-5/stable-diffusion-v1-5", dtype=torch.bfloat16, device_map="cuda")
-
-    # # pipe.load_lora_weights(lora_path)
-
-    # patch.apply_patch(pipe,
-    #                   acc_range=(10, 45),
-
-    #                   interp_mode="psi",
-    #                   caching_mode="reuse_interp",
-    #                   denominator=3,
-    #                   modular=(0,1,),
-
-    #                   lagrange_int=6,
-    #                   lagrange_step=24,
-    #                   lagrange_term=3)
 
     # # Warmup GPU. Only for testing the speed.
     # logging.info("Warming up GPU...")
     # for _ in range(1):
     #     set_random_seed(seed)
-    #     _ = pipe(
+    #     _ = baseline_pipe(
     #         prompt,
     #         height=args.height,
     #         width=args.width,
@@ -101,13 +50,13 @@ if __name__ == "__main__":
     #         max_sequence_length=512,
     #         output_type='pt'
     #     ).images
-    #     patch.reset_cache(pipe)
 
-    # logging.info("Running ⚡Zeus...")
-    # set_random_seed(seed)
+    # # Baseline
+    # logging.info("Running baseline...")
     # start_time = time.time()
+    # set_random_seed(seed)
 
-    # cap_output = pipe(
+    # ori_output = baseline_pipe(
     #     prompt,
     #     height=args.height,
     #     width=args.width,
@@ -116,16 +65,67 @@ if __name__ == "__main__":
     #     max_sequence_length=512,
     #     output_type='pt'
     # ).images
-    # use_time = time.time() - start_time
-    # logging.info("⚡Zeus: {:.2f} seconds".format(use_time))
+    # baseline_use_time = time.time() - start_time
+    # logging.info("Baseline: {:.2f} seconds".format(baseline_use_time))
 
-    # print(pipe.transformer._cache_bus.skipping_path)
+    # del baseline_pipe
+    # torch.cuda.empty_cache()
+
+    # Zeus
+    pipe = DiffusionPipeline.from_pretrained("stable-diffusion-v1-5/stable-diffusion-v1-5", dtype=torch.bfloat16, device_map="cuda")
+
+    # pipe.load_lora_weights(lora_path)
+
+    patch.apply_patch(pipe,
+                      acc_range=(10, 45),
+
+                      interp_mode="psi",
+                      caching_mode="reuse_interp",
+                      denominator=3,
+                      modular=(0,1,),
+
+                      lagrange_int=6,
+                      lagrange_step=24,
+                      lagrange_term=3)
+
+    # Warmup GPU. Only for testing the speed.
+    logging.info("Warming up GPU...")
+    for _ in range(1):
+        set_random_seed(seed)
+        _ = pipe(
+            prompt,
+            height=args.height,
+            width=args.width,
+            guidance_scale=3.5,
+            num_inference_steps=50,
+            max_sequence_length=512,
+            output_type='pt'
+        ).images
+        patch.reset_cache(pipe)
+
+    logging.info("Running ⚡Zeus...")
+    set_random_seed(seed)
+    start_time = time.time()
+
+    cap_output = pipe(
+        prompt,
+        height=args.height,
+        width=args.width,
+        guidance_scale=3.5,
+        num_inference_steps=50,
+        max_sequence_length=512,
+        output_type='pt'
+    ).images
+    use_time = time.time() - start_time
+    logging.info("⚡Zeus: {:.2f} seconds".format(use_time))
+
+    print(pipe.transformer._cache_bus.skipping_path)
 
     # logging.info("Baseline: {:.2f} seconds. CAP: {:.2f} seconds".format(baseline_use_time, use_time))
 
     
     # save_image([ori_output[0], cap_output[0]], "output.png")
-    save_image(ori_output[0],  "/kaggle/working/output.png")
+    save_image(cap_output[0],  "/kaggle/working/output.png")
     logging.info("Saved to output.png. Done!")
 
     # print("Evaluating LPIPS")
@@ -137,6 +137,6 @@ if __name__ == "__main__":
     #     T.Normalize((0.5,), (0.5,))
     # ])(img) for img in cap_output]).to('cuda')
 
-    loss_fn_alex = lpips.LPIPS(net='alex').to('cuda')
-    d = loss_fn_alex(p_r, p_o)
-    print(f"LPIPS: {d.item()}")
+    # loss_fn_alex = lpips.LPIPS(net='alex').to('cuda')
+    # d = loss_fn_alex(p_r, p_o)
+    # print(f"LPIPS: {d.item()}")
