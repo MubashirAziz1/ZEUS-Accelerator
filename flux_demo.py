@@ -10,8 +10,9 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %
 from torchvision.utils import save_image
 from zeus import patch
 
-from diffusers import FluxPipeline
+#from diffusers import FluxPipeline
 import torchvision.transforms as T
+from diffusers import DiffusionPipeline
 
 
 def set_random_seed(seed):
@@ -32,7 +33,9 @@ if __name__ == "__main__":
     seed = args.seed
     prompt = args.prompt
 
-    baseline_pipe = FluxPipeline.from_pretrained(args.model, torch_dtype=torch.bfloat16).to('cuda')
+    #baseline_pipe = FluxPipeline.from_pretrained(args.model, torch_dtype=torch.bfloat16).to('cuda')
+    baseline_pipe = DiffusionPipeline.from_pretrained("stable-diffusion-v1-5/stable-diffusion-v1-5", dtype=torch.bfloat16, device_map="cuda")
+
 
     # Warmup GPU. Only for testing the speed.
     logging.info("Warming up GPU...")
@@ -69,7 +72,8 @@ if __name__ == "__main__":
     torch.cuda.empty_cache()
 
     # Zeus
-    pipe = FluxPipeline.from_pretrained(args.model, torch_dtype=torch.bfloat16).to('cuda')
+    pipe = DiffusionPipeline.from_pretrained("stable-diffusion-v1-5/stable-diffusion-v1-5", dtype=torch.bfloat16, device_map="cuda")
+
     # pipe.load_lora_weights(lora_path)
 
     patch.apply_patch(pipe,
