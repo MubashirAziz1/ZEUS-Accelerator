@@ -26,7 +26,7 @@ if __name__ == "__main__":
     parser.add_argument("--seed", type=int, default=37)
     parser.add_argument("--height", type=int, default=1024)
     parser.add_argument("--width", type=int, default=1024)
-    parser.add_argument("--model", type=str, default="black-forest-labs/FLUX.1-dev")
+    parser.add_argument("--model", type=str, default="black-forest-labs/FLUX.1-schnell")
     args = parser.parse_args()
 
     lora_path = ""
