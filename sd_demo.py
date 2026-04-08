@@ -91,7 +91,7 @@ def load_lora_weights(pipeline, checkpoint_path):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model", type=str, default='stabilityai/stable-diffusion-2-1')
+    parser.add_argument("--model", type=str, default='stabilityai/stable-diffusion-xl-base-1.0')
     parser.add_argument("--prompt", type=str, default="a photo of a blue parrot")
     parser.add_argument("--solver", type=str, choices=["euler", "dpm"], default="euler")
     parser.add_argument("--seed", type=int, default=42)
