@@ -59,59 +59,59 @@ if __name__ == "__main__":
     del baseline_pipe
     torch.cuda.empty_cache()
 
-    # Zeus
-    pipe = StableDiffusionXLPipeline.from_pretrained(
-        args.model, torch_dtype=torch.float16, variant="fp16", use_safetensors=True
-    ).to("cuda:0")
-    if args.solver == "dpm":
-        pipe.scheduler = DPMSolverMultistepScheduler.from_config(pipe.scheduler.config)
-    if args.solver == "euler":
-        pipe.scheduler = EulerDiscreteScheduler.from_config(pipe.scheduler.config)
-    # pipe.load_lora_weights(lora_path)
+    # # Zeus
+    # pipe = StableDiffusionXLPipeline.from_pretrained(
+    #     args.model, torch_dtype=torch.float16, variant="fp16", use_safetensors=True
+    # ).to("cuda:0")
+    # if args.solver == "dpm":
+    #     pipe.scheduler = DPMSolverMultistepScheduler.from_config(pipe.scheduler.config)
+    # if args.solver == "euler":
+    #     pipe.scheduler = EulerDiscreteScheduler.from_config(pipe.scheduler.config)
+    # # pipe.load_lora_weights(lora_path)
 
-    patch.apply_patch(pipe,
-                      acc_range=(10, 45),
+    # patch.apply_patch(pipe,
+    #                   acc_range=(10, 45),
 
-                      interp_mode="psi",
-                      caching_mode="reuse_interp",
-                      denominator=3,
-                      modular=(0, 1, ),
+    #                   interp_mode="psi",
+    #                   caching_mode="reuse_interp",
+    #                   denominator=3,
+    #                   modular=(0, 1, ),
 
-                      lagrange_int=4,
-                      lagrange_step=24,
-                      lagrange_term=4)
+    #                   lagrange_int=4,
+    #                   lagrange_step=24,
+    #                   lagrange_term=4)
 
-    # Warmup GPU. Only for testing the speed.
-    logging.info("Warming up GPU...")
-    for _ in range(1):
-        set_random_seed(seed)
-        _ = pipe(prompt, num_inference_steps=50, output_type='pt').images
-        patch.reset_cache(pipe)
+    # # Warmup GPU. Only for testing the speed.
+    # logging.info("Warming up GPU...")
+    # for _ in range(1):
+    #     set_random_seed(seed)
+    #     _ = pipe(prompt, num_inference_steps=50, output_type='pt').images
+    #     patch.reset_cache(pipe)
 
-    logging.info("Running ⚡Zeus...")
-    set_random_seed(seed)
-    start_time = time.time()
+    # logging.info("Running ⚡Zeus...")
+    # set_random_seed(seed)
+    # start_time = time.time()
 
-    cap_output = pipe(prompt, num_inference_step=50, output_type='pt').images
-    use_time = time.time() - start_time
-    logging.info("⚡Zeus: {:.2f} seconds".format(use_time))
+    # cap_output = pipe(prompt, num_inference_step=50, output_type='pt').images
+    # use_time = time.time() - start_time
+    # logging.info("⚡Zeus: {:.2f} seconds".format(use_time))
 
-    logging.info("Baseline: {:.2f} seconds. CAP: {:.2f} seconds".format(baseline_use_time, use_time))
-    save_image([ori_output[0], cap_output[0]], "output.png")
+    # logging.info("Baseline: {:.2f} seconds. CAP: {:.2f} seconds".format(baseline_use_time, use_time))
+    save_image(ori_output[0], "/kaggle/working/output.png")
     logging.info("Saved to output.png. Done!")
 
-    print(pipe.unet._cache_bus.rel_momentum_list)
-    print(pipe.unet._cache_bus.skipping_path)
+    # print(pipe.unet._cache_bus.rel_momentum_list)
+    # print(pipe.unet._cache_bus.skipping_path)
 
-    print("Evaluating LPIPS")
-    p_r = torch.stack([T.Compose([
-        T.Normalize((0.5,), (0.5,))
-    ])(img) for img in ori_output]).to('cuda')
+    # print("Evaluating LPIPS")
+    # p_r = torch.stack([T.Compose([
+    #     T.Normalize((0.5,), (0.5,))
+    # ])(img) for img in ori_output]).to('cuda')
 
-    p_o = torch.stack([T.Compose([
-        T.Normalize((0.5,), (0.5,))
-    ])(img) for img in cap_output]).to('cuda')
+    # p_o = torch.stack([T.Compose([
+    #     T.Normalize((0.5,), (0.5,))
+    # ])(img) for img in cap_output]).to('cuda')
 
-    loss_fn_alex = lpips.LPIPS(net='alex').to('cuda')
-    d = loss_fn_alex(p_r, p_o)
-    print(f"LPIPS: {d.item()}")
+    # loss_fn_alex = lpips.LPIPS(net='alex').to('cuda')
+    # d = loss_fn_alex(p_r, p_o)
+    # print(f"LPIPS: {d.item()}")
