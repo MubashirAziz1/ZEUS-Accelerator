@@ -96,7 +96,7 @@ if __name__ == "__main__":
     use_time = time.time() - start_time
     logging.info("⚡Zeus: {:.2f} seconds".format(use_time))
 
-    logging.info("Baseline: {:.2f} seconds. CAP: {:.2f} seconds".format(baseline_use_time, use_time))
+    # logging.info("Baseline: {:.2f} seconds. CAP: {:.2f} seconds".format(baseline_use_time, use_time))
     save_image(cap_output[0], "/kaggle/working/output.png")
     logging.info("Saved to output.png. Done!")
 
