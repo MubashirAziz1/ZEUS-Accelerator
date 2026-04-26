@@ -104,73 +104,73 @@ if __name__ == "__main__":
 
     lora_path = ""
 
-    baseline_pipe = StableDiffusionPipeline.from_pretrained(args.model, torch_dtype=torch.float16).to("cuda:0")
-    if args.solver == "dpm":
-        baseline_pipe.scheduler = DPMSolverMultistepScheduler.from_config(baseline_pipe.scheduler.config)
-    if args.solver == "euler":
-        baseline_pipe.scheduler = EulerDiscreteScheduler.from_config(baseline_pipe.scheduler.config)
-    # baseline_pipe = load_lora_weights(baseline_pipe, lora_path)
-
-    logging.info("Warming up GPU...")
-    for _ in range(2):
-        set_random_seed(seed)
-        _ = baseline_pipe(prompt, output_type='pt', height=args.height, width=args.width, num_inference_steps=50).images
-
-    # Baseline
-    logging.info("Running baseline...")
-
-    start_time = time.time()
-    set_random_seed(seed)
-    ori_output = baseline_pipe(prompt, output_type='pt', height=args.height, width=args.width, num_inference_steps=50).images
-    use_time = time.time() - start_time
-
-    logging.info("Baseline: {:.2f} seconds".format(use_time))
-    del baseline_pipe
-    torch.cuda.empty_cache()
-
-    # # Zeus
-    # pipe = StableDiffusionPipeline.from_pretrained(args.model, torch_dtype=torch.float16).to("cuda:0")
-    # pipe.scheduler = DPMSolverMultistepScheduler.from_config(pipe.scheduler.config)
+    # baseline_pipe = StableDiffusionPipeline.from_pretrained(args.model, torch_dtype=torch.float16).to("cuda:0")
     # if args.solver == "dpm":
-    #     pipe.scheduler = DPMSolverMultistepScheduler.from_config(pipe.scheduler.config)
+    #     baseline_pipe.scheduler = DPMSolverMultistepScheduler.from_config(baseline_pipe.scheduler.config)
     # if args.solver == "euler":
-    #     pipe.scheduler = EulerDiscreteScheduler.from_config(pipe.scheduler.config)
-    # # pipe = load_lora_weights(pipe, lora_path)
-
-    # patch.apply_patch(pipe,
-    #                   acc_range=(10, 45),
-
-    #                   interp_mode="psi",
-    #                   caching_mode="reuse_interp",
-    #                   denominator=3,
-    #                   modular=(0, 1),
-
-    #                   lagrange_int=4,
-    #                   lagrange_step=24,
-    #                   lagrange_term=4,
-
-    #                   max_interval=6)
+    #     baseline_pipe.scheduler = EulerDiscreteScheduler.from_config(baseline_pipe.scheduler.config)
+    # # baseline_pipe = load_lora_weights(baseline_pipe, lora_path)
 
     # logging.info("Warming up GPU...")
     # for _ in range(2):
     #     set_random_seed(seed)
-    #     _ = pipe(prompt, output_type='pt', height=args.height, width=args.width, num_inference_steps=50).images
-    #     patch.reset_cache(pipe)
+    #     _ = baseline_pipe(prompt, output_type='pt', height=args.height, width=args.width, num_inference_steps=50).images
 
-    # logging.info("Running Cache-Assited Pruning...")
-    # set_random_seed(seed)
+    # # Baseline
+    # logging.info("Running baseline...")
 
     # start_time = time.time()
-    # cap_output = pipe(prompt, output_type='pt', height=args.height, width=args.width, num_inference_steps=50).images
+    # set_random_seed(seed)
+    # ori_output = baseline_pipe(prompt, output_type='pt', height=args.height, width=args.width, num_inference_steps=50).images
     # use_time = time.time() - start_time
 
-    # print(pipe.unet._cache_bus.rel_momentum_list)
-    # print(pipe.unet._cache_bus.abs_momentum_list)
-    # print(pipe.unet._cache_bus.skipping_path)
+    # logging.info("Baseline: {:.2f} seconds".format(use_time))
+    # del baseline_pipe
+    # torch.cuda.empty_cache()
 
-    # logging.info("⚡Zeus: {:.2f} seconds".format(use_time))
+    # Zeus
+    pipe = StableDiffusionPipeline.from_pretrained(args.model, torch_dtype=torch.float16).to("cuda:0")
+    pipe.scheduler = DPMSolverMultistepScheduler.from_config(pipe.scheduler.config)
+    if args.solver == "dpm":
+        pipe.scheduler = DPMSolverMultistepScheduler.from_config(pipe.scheduler.config)
+    if args.solver == "euler":
+        pipe.scheduler = EulerDiscreteScheduler.from_config(pipe.scheduler.config)
+    # pipe = load_lora_weights(pipe, lora_path)
 
-    save_image(ori_output[0], "/kaggle/working/output.png")
+    patch.apply_patch(pipe,
+                      acc_range=(10, 45),
+
+                      interp_mode="psi",
+                      caching_mode="reuse_interp",
+                      denominator=3,
+                      modular=(0, 1),
+
+                      lagrange_int=4,
+                      lagrange_step=24,
+                      lagrange_term=4,
+
+                      max_interval=6)
+
+    logging.info("Warming up GPU...")
+    for _ in range(2):
+        set_random_seed(seed)
+        _ = pipe(prompt, output_type='pt', height=args.height, width=args.width, num_inference_steps=50).images
+        patch.reset_cache(pipe)
+
+    logging.info("Running Cache-Assited Pruning...")
+    set_random_seed(seed)
+
+    start_time = time.time()
+    cap_output = pipe(prompt, output_type='pt', height=args.height, width=args.width, num_inference_steps=50).images
+    use_time = time.time() - start_time
+
+    print(pipe.unet._cache_bus.rel_momentum_list)
+    print(pipe.unet._cache_bus.abs_momentum_list)
+    print(pipe.unet._cache_bus.skipping_path)
+
+    logging.info("⚡Zeus: {:.2f} seconds".format(use_time))
+
+    save_image(cap_output[0], "/kaggle/working/output.png")
     logging.info("Saved to output.png. Done!")
 
     # print("Evaluating LPIPS")
